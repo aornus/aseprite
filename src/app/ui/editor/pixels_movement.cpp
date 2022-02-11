@@ -1,5 +1,5 @@
 // Aseprite
-// Copyright (C) 2019-2021  Igara Studio S.A.
+// Copyright (C) 2019-2022  Igara Studio S.A.
 // Copyright (C) 2001-2018  David Capello
 //
 // This program is distributed under the terms of
@@ -712,7 +712,8 @@ void PixelsMovement::moveImage(const gfx::PointF& pos, MoveModifier moveModifier
 void PixelsMovement::getDraggedImageCopy(std::unique_ptr<Image>& outputImage,
                                          std::unique_ptr<Mask>& outputMask)
 {
-  gfx::Rect bounds = m_currentData.transformedBounds();
+  ASSERT(!(m_site.tilemapMode() == TilemapMode::Tiles && !m_site.layer()->isTilemap()));
+  gfx::Rect bounds = m_currentData.transformedBounds(m_site.tilemapMode());
   if (bounds.isEmpty())
     return;
 
@@ -791,12 +792,16 @@ void PixelsMovement::stampImage(bool finalStamp)
     stampExtraCelImage();
   }
 
+  TilemapMode originalSiteTilemapMode = m_site.tilemapMode();
   for (Cel* target : cels) {
     // We'll re-create the transformation for the other cels
     if (target != currentCel) {
       ASSERT(target);
       m_site.layer(target->layer());
       m_site.frame(target->frame());
+      m_site.tilemapMode(target->layer()->isTilemap() ?
+                           originalSiteTilemapMode :
+                           TilemapMode::Pixels);
       ASSERT(m_site.cel() == target);
 
       reproduceAllTransformationsWithInnerCmds();
@@ -988,7 +993,8 @@ void PixelsMovement::redrawExtraImage(Transformation* transformation)
   if (!m_extraCel)
     m_extraCel.reset(new ExtraCel);
 
-  gfx::Rect bounds = transformation->transformedBounds();
+  ASSERT(!(m_site.tilemapMode() == TilemapMode::Tiles && !m_site.layer()->isTilemap()));
+  gfx::Rect bounds = transformation->transformedBounds(m_site.tilemapMode());
 
   if (!bounds.isEmpty()) {
     gfx::Size extraCelSize;
@@ -1402,10 +1408,19 @@ void PixelsMovement::reproduceAllTransformationsWithInnerCmds()
 
   m_document->setMask(m_initialMask0.get());
   m_initialMask->copyFrom(m_initialMask0.get());
-  m_originalImage.reset(
-    new_image_from_mask(
-      m_site, m_initialMask.get(),
-      Preferences::instance().experimental.newBlend()));
+  if (m_site.layer()->isTilemap() && m_site.tilemapMode() == TilemapMode::Tiles) {
+   m_site.tilemapMode(TilemapMode::Tiles);
+   m_originalImage.reset(
+   new_tilemap_from_mask(
+     m_site, m_initialMask.get()));
+  }
+  else {
+   m_site.tilemapMode(TilemapMode::Pixels);
+   m_originalImage.reset(
+   new_image_from_mask(
+     m_site, m_initialMask.get(),
+     Preferences::instance().experimental.newBlend()));
+  }
 
   for (const InnerCmd& c : m_innerCmds) {
     switch (c.type) {

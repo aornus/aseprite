@@ -1,5 +1,5 @@
 // Aseprite
-// Copyright (C) 2020-2021  Igara Studio S.A.
+// Copyright (C) 2020-2022  Igara Studio S.A.
 // Copyright (C) 2001-2016  David Capello
 //
 // This program is distributed under the terms of
@@ -9,6 +9,7 @@
 #define APP_TRANSFORMATION_H_INCLUDED
 #pragma once
 
+#include "app/tilemap_mode.h"
 #include "gfx/point.h"
 #include "gfx/rect.h"
 #include <vector>
@@ -94,7 +95,7 @@ public:
   // keep the current rotated-corners in the same location.
   void displacePivotTo(const gfx::PointF& newPivot);
 
-  gfx::RectF transformedBounds() const;
+  gfx::RectF transformedBounds(const TilemapMode tilemapMode = TilemapMode::Pixels) const;
 
   // Static helper method to rotate points.
   static gfx::PointF rotatePoint(const gfx::PointF& point,

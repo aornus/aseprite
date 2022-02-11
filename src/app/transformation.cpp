@@ -1,5 +1,5 @@
 // Aseprite
-// Copyright (C) 2020-2021  Igara Studio S.A.
+// Copyright (C) 2020-2022  Igara Studio S.A.
 // Copyright (C) 2001-2018  David Capello
 //
 // This program is distributed under the terms of
@@ -79,7 +79,7 @@ PointF Transformation::rotatePoint(
                 pivot.y + dx*sin + dy*cos);
 }
 
-RectF Transformation::transformedBounds() const
+RectF Transformation::transformedBounds(const TilemapMode tilemapMode) const
 {
   // Get transformed corners
   Corners corners = transformedCorners();
@@ -87,7 +87,12 @@ RectF Transformation::transformedBounds() const
   // Create a union of all corners
   RectF bounds;
   for (int i=0; i<Corners::NUM_OF_CORNERS; ++i)
-    bounds = bounds.createUnion(RectF(corners[i].x, corners[i].y, m_cornerThick, m_cornerThick));
+    bounds = bounds.createUnion(RectF(corners[i].x,
+                                      corners[i].y,
+                                      tilemapMode == TilemapMode::Tiles ?
+                                        0.001 : m_cornerThick,
+                                      tilemapMode == TilemapMode::Tiles ?
+                                        0.001 : m_cornerThick));
 
   return bounds;
 }
