@@ -1,0 +1,19 @@
+on: [push]
+
+jobs:
+  example:
+    runs-on: ubuntu-latest
+    steps:
+
+    # Load your repository.
+    - uses: actions/checkout@v2
+
+    # Install MSVC - only needed on Windows.
+    - uses: ilammy/msvc-dev-cmd@v1
+
+    # Install this github action.
+    - uses: neomura/setup-aseprite-cli-action@v1.0.1
+
+    # Aseprite is now available on the path.
+    - run: aseprite --help
+      shell: bash
